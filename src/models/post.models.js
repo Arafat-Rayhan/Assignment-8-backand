@@ -14,7 +14,28 @@ const postSchema=new mongoose.Schema({
     createdAt:{
         type:String,
         default: Date.now
+    },
+
+    eventData:{
+        type:String,
+        require:true,
+        validator:{
+            validator:(value)=> value > new Date(),
+            message:'your date must de in future'
+        }
+    },
+    
+     image:{
+         type:String,
+         default:null
+     },
+    
+
+    author:{
+        type: mongoose.Schema.Types.ObjectId,
+        require:true,
     }
+
 })
 
 const Post=mongoose.model('Post',postSchema);

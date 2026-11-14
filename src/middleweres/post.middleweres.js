@@ -6,9 +6,7 @@ const verifyAuth = async (req, res, next) => {
     const session = await auth.api.getSession({
       headers: fromNodeHeaders(req.headers),
     })
-    console.log('session found',!!session);
-    console.log('cookie recive',req.headers.cookie);
-
+ 
     if (!session) {
       return res.status(401).json({
         message: "Unauthorized",

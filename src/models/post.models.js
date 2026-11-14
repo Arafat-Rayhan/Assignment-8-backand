@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import {categorySlugs} from '../constants/categories.js'
 
 
 const postSchema=new mongoose.Schema({
@@ -16,15 +17,26 @@ const postSchema=new mongoose.Schema({
         default: Date.now
     },
 
-    eventData:{
-        type:String,
-        require:true,
-        validator:{
-            validator:(value)=> value > new Date(),
-            message:'your date must de in future'
-        }
+
+    eventDate: {
+         type: Date,
+          required: true
+         },
+
+    category: {
+         type: String,
+          required: true,
+           enum: categorySlugs
+         },
+
+    location: {
+         type: String,
+          required: true,
+        trim: true 
     },
     
+    
+
      image:{
          type:String,
          default:null

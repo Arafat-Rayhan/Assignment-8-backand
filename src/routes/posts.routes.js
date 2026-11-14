@@ -1,18 +1,37 @@
-import express from 'express'
-import {createPost,upDatePost,deletePost,getMyPosts,getAllPost} from '../controllers/post.controllers.js' 
-import verifyAuth from '../middleweres/post.middleweres.js'
-import upload from '../config/multer.js'
+import express from 'express';
+import {
+  createPost,
+  updatePost,
+  deletePost,
+  getMyPosts,
+  getAllPost,
+  getUpcomingPosts,
+  getPostById,
+  joinEvent,
+  leveEvent,
+  checkJoinStatus,
+} from '../controllers/post.controllers.js';
+import verifyAuth from '../middleweres/post.middleweres.js';
+import upload from '../config/multer.js';
 
-const router=express.Router()
+const router = express.Router();
 
+// Static রুটগুলো আগে (/:id এর আগে)
+router.get('/', getAllPost);
+router.get('/upcoming', getUpcomingPosts);
+router.get('/my-posts', verifyAuth, getMyPosts);
 
-// with verify and upload system
-router.post('/create',verifyAuth,upload.single('image'),createPost)
+// Create
+router.post('/create', verifyAuth, upload.single('image'), createPost);
 
+// Join / Leave / Status
+router.get('/:postId/join-status', verifyAuth, checkJoinStatus);
+router.post('/:postId/join', verifyAuth, joinEvent);
+router.delete('/:postId/leave', verifyAuth, leveEvent);
 
-router.get('/',getAllPost)
-router.get('/my-post',verifyAuth,getMyPosts)
-router.patch('/:id',upDatePost)
-router.delete('/:id',deletePost)
+// Single, Update, Delete (/:id সবার শেষে)
+router.get('/:id', getPostById);
+router.put('/:id', verifyAuth, upload.single('image'), updatePost);
+router.delete('/:id', verifyAuth, deletePost);
 
 export default router;

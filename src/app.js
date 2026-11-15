@@ -1,4 +1,4 @@
- 
+
 import express from 'express';
 import postRouster from './routes/posts.routes.js';
 import uploadRouter from './routes/upload.routes.js';

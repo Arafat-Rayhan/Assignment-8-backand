@@ -9,6 +9,7 @@ import {
   getPostById,
   joinEvent,
   leveEvent,
+  getJoinedPosts,
   checkJoinStatus,
 } from '../controllers/post.controllers.js';
 import verifyAuth from '../middleweres/post.middleweres.js';
@@ -27,6 +28,8 @@ router.post('/create', verifyAuth, upload.single('image'), createPost);
 // Join / Leave / Status
 router.get('/:postId/join-status', verifyAuth, checkJoinStatus);
 router.post('/:postId/join', verifyAuth, joinEvent);
+router.get('/my-posts', verifyAuth, getMyPosts);
+router.get('/joined', verifyAuth, getJoinedPosts); 
 router.delete('/:postId/leave', verifyAuth, leveEvent);
 
 // Single, Update, Delete (/:id সবার শেষে)

@@ -1,6 +1,8 @@
 import { categorySlugs } from "../constants/categories.js"; 
 import Post from '../models/post.models.js'
 import cloudinary from '../config/cloudinary.js';
+import Join from '../models/join.models.js';
+import mongoose from 'mongoose';
 // get all data
 
 
@@ -165,7 +167,6 @@ export const updatePost = async (req, res) => {
       location,
     } = req.body;
 
-    // Find existing post
     const post = await Post.findById(id);
 
     if (!post) {
@@ -175,7 +176,6 @@ export const updatePost = async (req, res) => {
       });
     }
 
-    // Check post ownership
     if (post.author.toString() !== req.user.id.toString()) {
       return res.status(403).json({
         success: false,
@@ -183,7 +183,6 @@ export const updatePost = async (req, res) => {
       });
     }
 
-    // Validate category
     if (
       category !== undefined &&
       !categorySlugs.includes(category)
@@ -194,7 +193,6 @@ export const updatePost = async (req, res) => {
       });
     }
 
-    // Validate location
     if (location !== undefined && !location.trim()) {
       return res.status(400).json({
         success: false,
@@ -202,7 +200,6 @@ export const updatePost = async (req, res) => {
       });
     }
 
-    // Update text fields only when provided
     if (title !== undefined) post.title = title;
     if (content !== undefined) post.content = content;
     if (eventDate !== undefined) post.eventDate = eventDate;
@@ -248,143 +245,94 @@ export const updatePost = async (req, res) => {
 };
 
 // delete
-
-export const deletePost=async (req,res)=>{
-    try{
-        const {id} =req.params;
-        const post = await Post.findByIdAndDelete(id);
-        if(!post){return res.status(404).json({success:false,massage:'post not delete'})}
-        res.status(200).json({
-            success:true,
-            massage:'post is deleted'
-        })
-    }catch(err){
-        res.status(500).json({success:false,message:err.massage})
-    }
-}                 
-
-
-// join
-
-  export const joinEvent= async (req, res) => {
+export const deletePost = async (req, res) => {
   try {
-    const { postId } = req.params;
-    const userId = req.user.id;
+    const { id } = req.params;
 
-    if (!ObjectId.isValid(postId)) {
-      return res.status(400).json({
-        message: "Invalid post ID",
-      });
-    }
-
-    const postsCollection = db.collection("posts");
-    const joinsCollection = db.collection("joins");
-
-    const post = await postsCollection.findOne({
-      _id: new ObjectId(postId),
-    });
-
+    const post = await Post.findById(id);
     if (!post) {
-      return res.status(404).json({
-        message: "Post not found",
+      return res.status(404).json({ success: false, message: 'Post not found' });
+    }
+
+    if (post.author.toString() !== req.user.id.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: 'You are not authorized to delete this post',
       });
     }
 
-    const existingJoin = await joinsCollection.findOne({
-      postId: new ObjectId(postId),
-      userId,
-    });
+    await post.deleteOne();
 
-    if (existingJoin) {
-      return res.status(409).json({
-        message: "Already joined",
-      });
-    }
+    await Join.deleteMany({ postId: id });
 
-    await joinsCollection.insertOne({
-      postId: new ObjectId(postId),
-      userId,
-      joinedAt: new Date(),
-    });
-
-    res.status(201).json({
-      success: true,
-      message: "Successfully joined",
-    });
-  } catch (error) {
-    res.status(500).json({
-      message: "Failed to join event",
-    });
+    res.status(200).json({ success: true, message: 'Post is deleted' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
   }
-  };
+}; 
 
-// leve from event
 
-  export const leveEvent= async (req, res) => {
+//  event
+
+export const joinEvent = async (req, res) => {
   try {
     const { postId } = req.params;
     const userId = req.user.id;
 
-    if (!ObjectId.isValid(postId)) {
-      return res.status(400).json({
-        message: "Invalid post ID",
-      });
+    if (!mongoose.isValidObjectId(postId)) {
+      return res.status(400).json({ success: false, message: 'Invalid post ID' });
     }
-
-    const joinsCollection = db.collection("joins");
-
-    const result = await joinsCollection.deleteOne({
-      postId: new ObjectId(postId),
-      userId,
-    });
-
-    if (result.deletedCount === 0) {
-      return res.status(404).json({
-        message: "You have not joined this event",
-      });
+    const post = await Post.findById(postId);
+    if (!post) {
+      return res.status(404).json({ success: false, message: 'Post not found' });
     }
-
-    res.status(200).json({
-      success: true,
-      message: "Successfully left the event",
-    });
+    const existing = await Join.findOne({ postId, userId });
+    if (existing) {
+      return res.status(409).json({ success: false, message: 'Already joined' });
+    }
+    await Join.create({ postId, userId });
+    res.status(201).json({ success: true, message: 'Successfully joined' });
   } catch (error) {
-    res.status(500).json({
-      message: "Failed to leave event",
-    });
+    console.error('joinEvent error:', error);
+    res.status(500).json({ success: false, message: 'Failed to join event', error: error.message });
   }
-  };
+};
 
-  // chake join
-
-  // Check Join Status
+export const leveEvent = async (req, res) => {
+  try {
+    const result = await Join.deleteOne({ postId: req.params.postId, userId: req.user.id });
+    if (result.deletedCount === 0) {
+      return res.status(404).json({ success: false, message: 'You have not joined this event' });
+    }
+    res.status(200).json({ success: true, message: 'Successfully left the event' });
+  } catch (error) {
+    console.error('leveEvent error:', error);
+    res.status(500).json({ success: false, message: 'Failed to leave event' });
+  }
+};
 
 export const checkJoinStatus = async (req, res) => {
   try {
-    const { postId } = req.params;
-    const userId = req.user.id;
-
-    if (!ObjectId.isValid(postId)) {
-      return res.status(400).json({
-        message: "Invalid post ID",
-      });
-    }
-
-    const joinsCollection = db.collection("joins");
-
-    const existingJoin = await joinsCollection.findOne({
-      postId: new ObjectId(postId),
-      userId,
-    });
-
-    res.status(200).json({
-      success: true,
-      isJoined: !!existingJoin,
-    });
-
+    const existing = await Join.findOne({ postId: req.params.postId, userId: req.user.id });
+    res.status(200).json({ success: true, isJoined: !!existing });
   } catch (error) {
-    res.status(500).json({
-      message: "Failed to check join status",
-    });
+    console.error('checkJoinStatus error:', error);
+    res.status(500).json({ success: false, message: 'Failed to check join status' });
+  }
+};
+
+export const getJoinedPosts = async (req, res) => {
+  try {
+    const joins = await Join.find({ userId: req.user.id })
+      .sort({ joinedAt: -1 })
+      .populate('postId');
+
+    // পোস্ট ডিলিট হয়ে গেলে populate এ null আসে, সেগুলো বাদ
+    const posts = joins.map((j) => j.postId).filter(Boolean);
+
+    res.status(200).json({ success: true, count: posts.length, data: posts });
+  } catch (error) {
+    console.error('getJoinedPosts error:', error);
+    res.status(500).json({ success: false, message: 'Failed to load joined events' });
   }
 };

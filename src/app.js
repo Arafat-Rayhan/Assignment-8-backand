@@ -10,7 +10,9 @@ app.use(cors({
   credentials: true
 }));
 app.use(express.json());
-
+app.get('/', (req, res) => {
+  res.send('Server is running successfully!');
+});
 app.use('/post', postRouster);
 
 // photo upload just profile

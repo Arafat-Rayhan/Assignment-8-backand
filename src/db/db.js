@@ -39,20 +39,24 @@
 
 
 
-
+import mongoose from 'mongoose';
 
 const connectDB = async () => {
-  try {
-    const db = await mongoose.connect(process.env.DB_URI); // bufferCommands অপশনটি সরিয়ে দিন
-    isConnected = db.connections[0].readyState === 1;
-    console.log('Database connected successfully');
-  } catch (err) {
-    console.log('Database connection error:', err);
-    throw err;
-  }
+    // যদি ইতিমধ্যে কানেক্টেড থাকে, তবে সেটাই রিটার্ন করবে
+    if (mongoose.connection.readyState >= 1) {
+        return;
+    }
+
+    try {
+        const db = await mongoose.connect(process.env.DB_URI);
+        console.log('Database connected successfully');
+    } catch (err) {
+        console.log('Database connection error:', err);
+        throw err;
+    }
 };
 
-
+export default connectDB;
 
 // import mongoose from 'mongoose';
 

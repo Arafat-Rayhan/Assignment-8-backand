@@ -397,14 +397,26 @@ export const checkJoinStatus = async (req, res) => {
   }
 };
 
+
+// joined events
 export const getJoinedPosts = async (req, res) => {
   try {
-    const joins = await Join.find({ userId: req.user.id })
-      .sort({ joinedAt: -1 })
-      .populate('postId');
+    const joins = await Join.find({ userId: req.user.id }).populate('postId');
 
-    // পোস্ট ডিলিট হয়ে গেলে populate এ null আসে, সেগুলো বাদ
-    const posts = joins.map((j) => j.postId).filter(Boolean);
+    const today = new Date(
+      new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'Asia/Dhaka',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      }).format(new Date())
+    );
+
+    const posts = joins
+      .map((j) => j.postId)
+      .filter(Boolean)
+      .filter((post) => new Date(post.eventDate) >= today)
+      .sort((a, b) => new Date(a.eventDate) - new Date(b.eventDate));
 
     res.status(200).json({ success: true, count: posts.length, data: posts });
   } catch (error) {

@@ -35,3 +35,40 @@ const connectDB = async () => {
 };
 
 export default connectDB;
+
+
+
+// import mongoose from 'mongoose';
+
+// let cached = global.mongoose;
+
+// if (!cached) {
+//   cached = global.mongoose = {
+//     conn: null,
+//     promise: null,
+//   };
+// }
+
+// const connectDB = async () => {
+//   if (cached.conn && cached.conn.connection.readyState === 1) {
+//     return cached.conn;
+//   }
+
+//   if (!cached.promise) {
+//     cached.promise = mongoose.connect(process.env.DB_URI, {
+//       bufferCommands: false,
+//     });
+//   }
+
+//   try {
+//     cached.conn = await cached.promise;
+//     console.log('MongoDB connected successfully');
+//     return cached.conn;
+//   } catch (error) {
+//     cached.promise = null;
+//     console.error('MongoDB connection error:', error);
+//     throw error;
+//   }
+// };
+
+// export default connectDB;

@@ -18,7 +18,7 @@ import verifyApiToken from '../middleweres/post.jwt.js';
 const router = express.Router();
 
 // Static রুটগুলো আগে (/:id এর আগে)
-router.get('/', getAllPost);
+router.get('/all', getAllPost);
 router.get('/upcoming', getUpcomingPosts);
 router.get('/my-posts', verifyApiToken, getMyPosts);
 

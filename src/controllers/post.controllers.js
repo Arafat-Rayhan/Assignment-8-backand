@@ -3,26 +3,61 @@ import Post from '../models/post.models.js'
 import cloudinary from '../config/cloudinary.js';
 import Join from '../models/join.models.js';
 import mongoose from 'mongoose';
+
+
+
 // get all data
+export const getAllPost = async (req, res) => {
+  try {
+    const { category, upcoming, search } = req.query;
+    const limit = Math.min(Number(req.query.limit) || 12, 50);
 
+    const filter = {};
 
-export const getAllPost= async(req,res)=>{
-    try{
-        const posts =await Post.find();
-        res.status(200).json({
-            success:true,
-            count:posts.length,
-            data:posts,
-        })
-    }catch(err){
-        res.status(500).json({
-        success:false,
-        message:'server is error',
-        error:err.message
-        })
-       
+    if (category) {
+      filter.category = category;
     }
-} 
+
+    if (upcoming === "true") {
+      const today = new Intl.DateTimeFormat("en-CA", {
+        timeZone: "Asia/Dhaka",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      }).format(new Date());
+
+      filter.eventDate = { $gte: new Date(today) };
+    }
+
+    if (typeof search === "string" && search.trim()) {
+      const escaped = search
+        .trim()
+        .slice(0, 50)
+        .replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+      const regex = new RegExp(escaped, "i");
+
+      filter.$or = [{ title: regex }, { content: regex }, { location: regex }];
+    }
+
+    const sort = upcoming === "true" ? { eventDate: 1 } : { createdAt: -1 };
+
+    const posts = await Post.find(filter).sort(sort).limit(limit);
+
+    return res.status(200).json({
+      success: true,
+      count: posts.length,
+      data: posts,
+    });
+  } catch (error) {
+    console.error("Error fetching posts:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
+  }
+};
  
 
 
@@ -33,6 +68,7 @@ export const getAllPost= async(req,res)=>{
 export const createPost = async (req, res) => {
   try {
     const { title, content, createdAt, eventDate, category, location } = req.body;
+ 
 
     if (!categorySlugs.includes(category)) {
       return res.status(400).json({ success: false, message: "Invalid category" });
@@ -153,6 +189,46 @@ export const getMyPosts = async (req, res) => {
     });
   }
 };
+
+// export const getMyPosts = async (req, res) => {
+//   try {
+//     const userId = req.user.id;
+//     const { category } = req.query;
+
+//     const filter = {
+//       author: userId,
+//     };
+
+//     // Category থাকলে category অনুযায়ী filter হবে
+//     if (category) {
+//       filter.category = category;
+//     }
+
+//     const myPosts = await Post.find(filter)
+//       .sort({ createdAt: -1 });
+
+//     return res.status(200).json({
+//       success: true,
+//       count: myPosts.length,
+//       data: myPosts,
+//     });
+
+//   } catch (error) {
+//     console.error("Error fetching my posts:", error);
+
+//     return res.status(500).json({
+//       success: false,
+//       message: "Internal Server Error",
+//     });
+//   }
+// };
+
+
+
+
+
+
+
 
 // update 
 export const updatePost = async (req, res) => {

@@ -1,4 +1,4 @@
-import { createRemoteJWKSet, jwtVerify } from 'jose';
+import { createRemoteJWKSet, jwtVerify, decodeProtectedHeader } from 'jose';
 
 const authUrl = process.env.BETTER_AUTH_URL;
 
@@ -7,7 +7,7 @@ if (!authUrl) {
 }
 
 const JWKS = createRemoteJWKSet(
-  new URL('/api/auth/jwks', authUrl)
+  new URL(`${authUrl}/api/auth/jwks` )
 );
 
 const verifyApiToken = async (req, res, next) => {
@@ -29,6 +29,7 @@ const verifyApiToken = async (req, res, next) => {
   }
 
   try {
+    
     const { payload } = await jwtVerify(token, JWKS);
     const tokenUserId = payload.sub ?? payload.id;
 
